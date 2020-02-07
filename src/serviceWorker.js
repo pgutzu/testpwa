@@ -10,14 +10,27 @@
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://bit.ly/CRA-PWA
 
+const staticCacheName = 'site-static';
+const dynamicCacheName = 'site-dynamic-v1'
+const assets = [
+  '/',
+  '../public/index.html',
+  'app.js',
+  'main.js',
+  'index.css',
+  'logo.png',
+];
+
+
+
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
-    // [::1] is the IPv6 localhost address.
-    window.location.hostname === '[::1]' ||
-    // 127.0.0.0/8 are considered localhost for IPv4.
-    window.location.hostname.match(
-      /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
-    )
+  // [::1] is the IPv6 localhost address.
+  window.location.hostname === '[::1]' ||
+  // 127.0.0.0/8 are considered localhost for IPv4.
+  window.location.hostname.match(
+    /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
+  )
 );
 
 export function register(config) {
@@ -45,7 +58,7 @@ export function register(config) {
         navigator.serviceWorker.ready.then(() => {
           console.log(
             'This web app is being served cache-first by a service ' +
-              'worker. To learn more, visit https://bit.ly/CRA-PWA'
+            'worker. To learn more, visit https://bit.ly/CRA-PWA'
           );
         });
       } else {
@@ -53,6 +66,49 @@ export function register(config) {
         registerValidSW(swUrl, config);
       }
     });
+
+    window.addEventListener('install', evt => {
+      console.log('service worker has been installed');
+      evt.waitUntil(
+        caches.open(staticCacheName).then(cache => {
+          console.log('caching shell assets');
+          cache.addAll(assets);
+        })
+      )
+    });
+
+    window.addEventListener('activate', evt => {
+      // console.log('service worker has been activated');
+      evt.waitUntil(
+        caches.keys().then(keys => {
+          // console.log('keys');
+          return Promise.all(keys
+            .filter(key => key !== staticCacheName && key !== dynamicCacheName)
+            .map(key => caches.delete(key))
+          )
+        })
+      );
+    });
+
+
+    window.addEventListener('fetch', evt => {
+      evt.respondWith(
+        caches.match(evt.request).then(cacheRes => {
+          return cacheRes || fetch(evt.request).then(fetchRes => {
+            return caches.open(dynamicCacheName).then(cache => {
+              cache.put(evt.request.url, fetchRes.clone());
+              // limitCacheSize(dynamicCacheName, 15);
+              return fetchRes;
+            })
+          });
+        }).catch(() => {
+          if (evt.request.url.indexOf('.hrml') > -1) {
+            return caches.match('pages/fallback.html');
+          }
+        })
+      );
+    });
+
   }
 }
 
@@ -73,7 +129,7 @@ function registerValidSW(swUrl, config) {
               // content until all client tabs are closed.
               console.log(
                 'New content is available and will be used when all ' +
-                  'tabs for this page are closed. See https://bit.ly/CRA-PWA.'
+                'tabs for this page are closed. See https://bit.ly/CRA-PWA.'
               );
 
               // Execute callback
@@ -137,3 +193,6 @@ export function unregister() {
     });
   }
 }
+
+
+

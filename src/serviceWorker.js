@@ -53,7 +53,7 @@ export function register(config) {
 
       console.log("load")
 
-      const swUrl = `https://testpwareact.herokuapp.com//service-worker.js`;
+      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
       console.log("swUrl", swUrl)
 
 

@@ -39,6 +39,9 @@ export function register(config) {
 
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
+    console.log("process", process)
+    console.log("publicUrl", publicUrl)
+
     if (publicUrl.origin !== window.location.origin) {
       // Our service worker won't work if PUBLIC_URL is on a different origin
       // from what our page is served on. This might happen if a CDN is used to
@@ -47,7 +50,12 @@ export function register(config) {
     }
 
     window.addEventListener('load', () => {
-      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+
+      console.log("load")
+
+      const swUrl = `https://testpwareact.herokuapp.com//service-worker.js`;
+      console.log("swUrl", swUrl)
+
 
       if (isLocalhost) {
         // This is running on localhost. Let's check if a service worker still exists or not.
@@ -78,10 +86,10 @@ export function register(config) {
     });
 
     window.addEventListener('activate', evt => {
-      // console.log('service worker has been activated');
+      console.log('service worker has been activated');
       evt.waitUntil(
         caches.keys().then(keys => {
-          // console.log('keys');
+          console.log('keys');
           return Promise.all(keys
             .filter(key => key !== staticCacheName && key !== dynamicCacheName)
             .map(key => caches.delete(key))
@@ -92,11 +100,15 @@ export function register(config) {
 
 
     window.addEventListener('fetch', evt => {
+      console.log("fetch", evt)
+
       evt.respondWith(
         caches.match(evt.request).then(cacheRes => {
           return cacheRes || fetch(evt.request).then(fetchRes => {
             return caches.open(dynamicCacheName).then(cache => {
               cache.put(evt.request.url, fetchRes.clone());
+              console.log("cache")
+
               // limitCacheSize(dynamicCacheName, 15);
               return fetchRes;
             })
@@ -113,6 +125,8 @@ export function register(config) {
 }
 
 function registerValidSW(swUrl, config) {
+  console.log("registerValidSW", swUrl, config)
+
   navigator.serviceWorker
     .register(swUrl)
     .then(registration => {
